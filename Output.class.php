@@ -12,7 +12,7 @@ define('ERROR_MESSAGE_TPL', '<!DOCTYPE html><html><head><meta charset="utf-8"></
 class Output
 {
 	/** @var string[] */
-	private static $warnings = [];
+	public static $warnings = [];
 
 	private function __construct() 
 	{
@@ -32,7 +32,7 @@ class Output
 
 	public static function addWarning(string $message)
 	{
-		self::$warnings[] = IS_CLI ? $message : sprintf('<pre class="warning-message">Warning. %s</pre>', htmlspecialchars($message));
+		self::$warnings[] = sprintf('Warning. %s', $message);
 	}
 
 	public static function result(BenchmarkHandler $handler)
@@ -48,8 +48,14 @@ class Output
 		}
 		else
 		{
-			echo self::generateOutputHtml($handler->data);
+			echo self::generateOutputHtml2($handler->data);
 		}
+	}
+
+	private static function generateOutputHtml2(array $data)
+	{
+		self::addWarning('Test warn!');
+		require __DIR__ . '/template2.php';
 	}
 
 	private static function generateOutputHtml(array $data)

@@ -6,6 +6,7 @@
 		html
 		{
 			font-size: 13px;
+			font-family: monospace;
 		}
 		body
 		{
@@ -50,9 +51,26 @@
 		}
 	</style>
 </head>
+<?php
+	/** @var array $data The data to print*/
+?>
 <body>
-	{{warning-messages}}
-	{{output}}
+	<div id="warning-messages">
+		<?php foreach(Output::$warnings as $warning): ?>
+			<div class="warning-message"><?= htmlspecialchars($warning) ?></div>
+		<?php endforeach; ?>
+	</div>
+	<div id="sysinfos">
+		<div class="section-heading">SYSTEM INFO</div>
+		<table>
+			<?php foreach($data['sysinfo'] as $k => $d): ?>
+				<tr class="sysinfo" data-key="<?= htmlspecialchars($k) ?>" data-value="<?= htmlspecialchars((string)$d['value']) ?>">
+					<td><?= htmlspecialchars($d['text']) ?></td>
+					<td><?= htmlspecialchars($d['value']) ?></td>
+				</tr>
+			<?php endforeach; ?>
+		</table>
+	</div>
 </body>
 </html>
 	
