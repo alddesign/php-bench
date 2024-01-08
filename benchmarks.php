@@ -8,28 +8,6 @@ define('JSON_DATA', ['string' => 'text', 'int' => 42, 'float' => 42.0, 'bool' =>
 //Make sure to return an array of type Benchmark
 return
 [
-	#region fast
-	new Benchmark('closure', 'fast', function ($count = 200000)
-	{
-		$count = $count * MULTIPLIER;
-
-		$closure = function($a, $b){return $a + $b;};
-		for ($i = 0; $i < $count; $i++) 
-		{
-			$closure(1,2);
-		}
-	}),
-	new Benchmark('closure_ivoke', 'fast', function ($count = 200000)
-	{
-		$count = $count * MULTIPLIER;
-		
-		$closure = function($a, $b){return $a + $b;};
-		for ($i = 0; $i < $count; $i++) 
-		{
-			$closure->__invoke(1,2);
-		}
-	}),
-	#endregion
 	#region general
 	new Benchmark('math', 'general', function ($count = 200000)
 	{
@@ -88,7 +66,7 @@ return
 			++$i;
 		}
 	}),
-	new Benchmark('ifelse', 'general', function ($count = 10000000)
+	new Benchmark('if_else', 'general', function ($count = 10000000)
 	{
 		$a = 0;
 		$b = 0;
@@ -127,7 +105,7 @@ return
 			}
 		}
 	}),
-	new Benchmark('string', 'general', function ($count = 50000)
+	new Benchmark('strings', 'general', function ($count = 50000)
 	{
 		$string = '<i>the</i> quick brown fox jumps over the lazy dog  ';
 		$count = $count * MULTIPLIER;
@@ -164,21 +142,88 @@ return
 			ucwords($string);
 		}
 	}),
-	new Benchmark('array', 'general', function ($count = 50000)
+	new Benchmark('array_operations', 'general', function ($count = 5000000)
+	{
+		
+		//Rather than array functions like below, we test normal array operations like initialization, accessing values, adding values
+		$count = $count * MULTIPLIER;
+		for ($i = 0; $i < $count; $i++) 
+		{
+			//Initalizing
+			$arr = ['a' => 'a', 'b' => 'b', 1 => 1, 2 => 2];
+			
+			//Setting & getting values
+			$arr['a'] = $arr['b'];
+			$arr[1] = $arr[2];
+			
+			//Adding values
+			$arr['c'] = 'a';
+			$arr[3] = 3;
+			$arr[] = 'd';
+
+			//Count and check
+			count($arr);
+			isset($arr['x']);
+		}
+	}),
+	new Benchmark('array_functions', 'general', function ($count = 50000)
 	{
 		$a = range(0, 100);
+        $count = $count * MULTIPLIER;
+        for ($i = 0; $i < $count; $i++) 
+		{
+            array_keys($a);
+            array_values($a);
+            array_flip($a);
+            array_map(function ($e) {}, $a);
+            array_walk($a, function ($e, $i) {});
+            array_reverse($a);
+            array_sum($a);
+            array_merge($a, [101, 102, 103]);
+            array_replace($a, [1, 2, 3]);
+            array_chunk($a, 2);
+        }
+	}),
+	new Benchmark('classes', 'general', function ($count = 100000)
+	{
 		$count = $count * MULTIPLIER;
+
+		class PhpBenchTestClass
+		{
+			public $a = 0;
+			public static $b = 0;
+			public function __destruct()
+			{
+				$this->a = null;
+			}
+			public function set($a)
+			{
+				$this->a = $a;
+			}
+			public function get()
+			{
+				return $this->a;
+			}
+			public static function staticSet($b)
+			{
+				self::$b = $b;
+			}
+			public static function staticGet()
+			{
+				return self::$b;
+			}
+		}
+
 		for ($i = 0; $i < $count; $i++) {
-			array_keys($a);
-			array_values($a);
-			array_flip($a);
-			array_map(function ($e) {}, $a);
-			array_walk($a, function ($e, $i) {});
-			array_reverse($a);
-			array_sum($a);
-			array_merge($a, [101, 102, 103]);
-			array_replace($a, [1, 2, 3]);
-			array_chunk($a, 2);
+			$o = new PhpBenchTestClass(1);
+			$o->a = 2;
+			$a = $o->a;
+			$o->set(3);
+			$o->get();
+			PhpBenchTestClass::$b = 4;
+			$b = PhpBenchTestClass::$b;
+			PhpBenchTestClass::staticSet(5);
+			PhpBenchTestClass::staticGet();
 		}
 	}),
 	new Benchmark('regex', 'general', function ($count = 1000000)
@@ -229,6 +274,26 @@ return
 		{
 			json_decode($jsonData, true);
 			json_decode($jsonData, false);
+		}
+	}),
+	new Benchmark('closures', 'general', function ($count = 200000)
+	{
+		$count = $count * MULTIPLIER;
+
+		$closure = function($a, $b){return $a + $b;};
+		for ($i = 0; $i < $count; $i++) 
+		{
+			$closure(1,2);
+		}
+	}),
+	new Benchmark('closures_invoke', 'general', function ($count = 200000)
+	{
+		$count = $count * MULTIPLIER;
+		
+		$closure = function($a, $b){return $a + $b;};
+		for ($i = 0; $i < $count; $i++) 
+		{
+			$closure->__invoke(1,2);
 		}
 	}),
 	#endregion

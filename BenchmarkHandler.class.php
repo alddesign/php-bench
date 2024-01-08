@@ -57,7 +57,7 @@ class BenchmarkHandler
 			}
 
 			//Add the result
-			$this->data['results'][] = $result;
+			$this->data['results'][$benchmark->name] = $result;
 		}
 
 		$this->data['totals']['total_time']['value'] = round($totalTime, DECIMAL_PLACES);

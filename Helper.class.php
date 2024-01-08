@@ -41,7 +41,7 @@ class Helper
 			$warning .= 'This can be due to your apache/php config, or limited by your hosting provider. ';
 			$warning .= 'Depending on your systems performance, this is necessary to run all benchmarks.';
 			
-			Output::warning($warning);
+			Output::addWarning($warning);
 		}
 	}
 
@@ -78,7 +78,7 @@ class Helper
 
 		if(!empty($args['benchmarks']) && !empty($args['groups']))
 		{
-			Output::error('Invalid args. Please either the "groups" or "benchmarks" arg, not both.');
+			Output::errorAndDie('Invalid args. Please spcify either the "groups" or "benchmarks" arg, not both.');
 		}
 
 		//Cast the type of $args to the type defined in DEFAULT_ARGS

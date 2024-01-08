@@ -32,7 +32,7 @@ class Benchmark
 		}
 		catch(Exception $ex)
 		{
-			$this->error = sprintf('Error while running benchmark "%s": %s.', $this->name, $ex->getMessage());
+			$this->error = $ex->getMessage();
 			return false;
 		}		
 	}

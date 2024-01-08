@@ -4,68 +4,62 @@ declare(strict_types=1);
 //Line length on the output
 define('LINE_LEN_HTML', 80);
 define('LINE_LEN_CLI', 60);
-
-//CSS Colors
-define('COLOR_ERROR', 'crimson');
-define('COLOR_SECTION_HEADING', 'teal');
-define('COLOR_WARNING', 'orange');
-define('COLOR_SKIPPED', 'gray');
-define('COLOR_OK', 'forestgreen');
-define('COLOR_BG', 'white');
-define('FONT_SIZE', '13px');
+define('HTML_TPL_FILE', './template.html');
+define('OUTPUT_PLACEHOLDER', '{{output}}');
+define('WARNING_MESSAGES_PLACEHOLDER', '{{warning-messages}}');
+define('ERROR_MESSAGE_TPL', '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><pre class="error-message" style="color:crimson;">Error. %s</pre></body></html>');
 
 class Output
 {
+	/** @var string[] */
+	private static $warnings = [];
+
 	private function __construct() 
 	{
 		//Prevent making an object
 	}
 
-	public static function error(string $message)
+	public static function errorAndDie(string $message)
 	{
 		if(!IS_CLI)
 		{
-			http_response_code(500);
+			@http_response_code(500);
 		}
 
-		echo IS_CLI ? $message : sprintf('<pre class="error" style="color: %s;">Error. %s</pre>', COLOR_ERROR, htmlspecialchars($message));
+		echo IS_CLI ? $message : sprintf(ERROR_MESSAGE_TPL, htmlspecialchars($message));
 		exit(1);
 	}
 
-	public static function warning(string $message)
+	public static function addWarning(string $message)
 	{
-		echo IS_CLI ? $message : sprintf('<pre class="warning" style="color: %s;">Warning. %s</pre>', COLOR_WARNING, htmlspecialchars($message));
+		self::$warnings[] = IS_CLI ? $message : sprintf('<pre class="warning-message">Warning. %s</pre>', htmlspecialchars($message));
 	}
 
-	public static function data(BenchmarkHandler $handler)
+	public static function result(BenchmarkHandler $handler)
 	{
 		if(!$handler->runComplete)
 		{
-			Output::error('Cannot print results. Please call BenchmarkHandler->run() first.');
+			self::errorAndDie('Cannot print results. Please call BenchmarkHandler->run() first.');
 		}
 
 		if(IS_CLI)
 		{
-			self::dataCli($handler->data);
+			echo self::resultCli($handler->data);
 		}
 		else
 		{
-			self::dataHtml($handler->data);
+			echo self::generateOutputHtml($handler->data);
 		}
 	}
 
-	private static function dataHtml(array $data)
+	private static function generateOutputHtml(array $data)
 	{
-		$output = '<!DOCTYPE html>';
-		$output .= '<html style="font-size: '.FONT_SIZE.';">';
-		$output .= '<head></head>';
-		$output .= '<body style="background-color: '.COLOR_BG.'; padding: 0; margin: 1rem;">';
-		$output .= '<pre>';
+		$output = '<pre class="output">';
 		$output .= self::makeLineHtml('','','-');
-		$output .= sprintf('<h1 id="title" style="margin: 0;">%s</h1>', htmlspecialchars(TITLE));
+		$output .= sprintf('<h1 id="title">%s</h1>', htmlspecialchars(TITLE));
 		$output .= self::makeLineHtml('','','-');
 
-		$output .= self::makeLineHtml('### SYSTEM INFO ','','#', '<div style="color: '.COLOR_SECTION_HEADING.'; margin-top: .5rem;">%s%s%s</div>');
+		$output .= self::makeLineHtml('### SYSTEM INFO ','','#', '<div class="section-heading">%s%s%s</div>');
 		foreach($data['sysinfo'] as $k => $d)
 		{
 			$tpl = '';
@@ -75,35 +69,31 @@ class Output
 			$output .= self::makeLineHtml($d['text'], $d['value'], '.', $tpl);
 		}
 
-		$output .= self::makeLineHtml('### BENCHMARK RESULTS [seconds] ','','#', '<div style="color: '.COLOR_SECTION_HEADING.'; margin-top: .5rem;">%s%s%s</div>');
+		$output .= self::makeLineHtml('### BENCHMARK RESULTS [seconds] ','','#', '<div  class="section-heading">%s%s%s</div>');
 		$lastGroup = '';
 		foreach($data['results'] as $d)
 		{
 			//Show group heading
 			if($lastGroup != $d['group'])
 			{
-				$output .= self::makeLineHtml($d['group'] . ' ','','-', '<div style="color: '.COLOR_SECTION_HEADING.'; margin-top: .25rem;">%s%s%s</div>');
+				$output .= self::makeLineHtml($d['group'] . ' ','','-', '<div  class="group-section-heading">%s%s%s</div>');
 			}
 
-			$name = sprintf('[%s]%s', $d['status'], $d['name']);
+			$status = $d['status'];
+			$name = sprintf('[%s]%s', $status, $d['name']);
 			$time = number_format($d['time'], DECIMAL_PLACES);
 
-			$color = 'inherit';
-			$color = $d['status'] === 'ok' ? COLOR_OK : $color;
-			$color = $d['status'] === 'skipped' ? COLOR_SKIPPED : $color;
-			$color = $d['status'] === 'error' ? COLOR_ERROR : $color;
-
 			$tpl = '';
-			$tpl .= '<div class="result" data-status="'.$d['status'].'" data-time="'.$d['time'].'" style="color: '.$color.';">';
+			$tpl .= '<div class="result '.$status.'-result" data-status="'.$status.'" data-time="'.$d['time'].'">';
 				$tpl .= '<span class="name">%s</span>%s<span class="value">%s</span>';
+				$tpl .= $status === 'error' ? '<div class="error">'.htmlspecialchars($d['error']).'</div>' : '';
 			$tpl .= '</div>';
-
 			$output .= self::makeLineHtml($name, $time, '.', $tpl);
 
 			$lastGroup = $d['group'];
 		}
 
-		$output .= self::makeLineHtml('### TOTALS ','','#', '<div style="color: '.COLOR_SECTION_HEADING.'; margin-top: .5rem;">%s%s%s</div>');
+		$output .= self::makeLineHtml('### TOTALS ','','#', '<div class="section-heading">%s%s%s</div>');
 		foreach($data['totals'] as $k => $d)
 		{
 			$tpl = '';
@@ -114,16 +104,30 @@ class Output
 			$output .= self::makeLineHtml($d['text'], number_format($d['value'], DECIMAL_PLACES), '.', $tpl);
 		}
 
+		//Add data as JSON to textarea
+		$output .= self::makeLineHtml('### JSON DATA ','','#', '<div class="section-heading">%s%s%s</div>');
+		$output .= sprintf('<input type="text" id="json-data" readonly="" onclick="this.focus();this.select();" value="%s">', htmlspecialchars(json_encode($data)));
 		$output .= '</pre>';
-		$output .= '</body>';
-		$output .= '</html>';
 
-		echo $output;
+		//Add data to JS
+		$output .= '<script>';
+		$output .= sprintf('var jsonData = %s;', json_encode($data));
+		$output .= 'console.log(jsonData);';
+		$output .= '</script>';
+
+		return self::composeHtmlDocument($output);
 	}
 
-	private static function dataCli(array $data)
+	/**
+	 * @return string
+	 */
+	private static function composeHtmlDocument(string $output)
 	{
+		$html = file_get_contents(HTML_TPL_FILE);
+		$html = str_replace(OUTPUT_PLACEHOLDER, $output, $html);
+		$html = str_replace(WARNING_MESSAGES_PLACEHOLDER, empty(self::$warnings) ? '' : implode("\n", self::$warnings) ,$html);
 
+		return $html;
 	}
 
 	/**
@@ -137,5 +141,10 @@ class Output
 		$end = IS_CLI ? $start : htmlspecialchars($end);
 
 		return sprintf($tpl, $start, str_pad('', $len, $pad), $end);
+	}
+
+	private static function resultCli(array $data)
+	{
+
 	}
 }
