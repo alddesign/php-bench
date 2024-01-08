@@ -142,28 +142,40 @@ return
 			ucwords($string);
 		}
 	}),
-	new Benchmark('array_operations', 'general', function ($count = 5000000)
+	new Benchmark('n1', 'general', function ($count = 50000)
 	{
-		
-		//Rather than array functions like below, we test normal array operations like initialization, accessing values, adding values
 		$count = $count * MULTIPLIER;
 		for ($i = 0; $i < $count; $i++) 
 		{
-			//Initalizing
-			$arr = ['a' => 'a', 'b' => 'b', 1 => 1, 2 => 2];
-			
-			//Setting & getting values
-			$arr['a'] = $arr['b'];
-			$arr[1] = $arr[2];
-			
-			//Adding values
-			$arr['c'] = 'a';
-			$arr[3] = 3;
-			$arr[] = 'd';
 
-			//Count and check
-			count($arr);
-			isset($arr['x']);
+		}
+	}),
+	new Benchmark('n2', 'general', function ($count = 50000)
+	{
+		$count = $count * MULTIPLIER;
+		for ($i = 0; $i < $count; $i++) 
+		{
+
+		}
+	}),
+	new Benchmark('array_basics', 'general', function ($count = 200000)
+	{
+		//Rather than array functions like below, we test "basic" array operations like initialization, accessing, setting, adding and unsetting elements.
+		$count = $count * MULTIPLIER;
+		for ($i = 0; $i < $count; $i++) 
+		{
+			//Initalizing a larger array
+			$a = ['John', 'Jane', 'Mary', 'James', 'Emily', 'Michael', 'Sarah', 'Jessica', 'Jacob', 'Mohammed', 'Emma', 'Joshua', 'Amanda', 'Andrew', 'Daniel', 'Melissa', 'Joseph', 'Deborah', 'Patricia', 'Richard', 'Linda', 'Barbara', 'Robert', 'Susan', 'Dorothy', 'William', 'Nancy', 'Paul', 'Jennifer', 'Liam', 'Olivia', 'Noah', 'Riley', 'Jackson', 'Sophia', 'Aiden', 'Samantha', 'Lucas', 'Peyton', 'Mason', 'Madison', 'Logan', 'Nicole', 'Alexander', 'Heather', 'Ethan', 'Stephanie', 'David', 'Rebecca', 'Matthew'];
+			$c = count($a);
+			for($x = 0; $x < $c; $x++)
+			{
+				$a[$x] = $a[$c-$x-1]; //Setting and accessings elements
+				isset($a[$x]); //isset on existing index
+				isset($a['none']); //isset on nonesisting index		
+				$a[$c] = 'Another'; //Add by index
+				$a[] = 'New One'; //Add without index
+				unset($a[$c], $a[$c+1]); //Unset the newly create elements
+			}
 		}
 	}),
 	new Benchmark('array_functions', 'general', function ($count = 50000)
