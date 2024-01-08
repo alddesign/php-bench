@@ -3,8 +3,10 @@
 error_reporting(E_ALL);
 @ini_set('display_errors', '1');
 @ini_set('display_startup_errors', '1');
+/** @var bool */
+define('IS_CLI', PHP_SAPI === 'cli');
 
-checkPhpVersion(7,13);
+checkPhpVersion(7,0);
 
 //Loading classes
 require './Output.class.php';
@@ -13,8 +15,6 @@ require './BenchmarkHandler.class.php';
 require './Benchmark.class.php';
 
 //Define important constants
-/** @var bool */
-define('IS_CLI', PHP_SAPI === 'cli');
 define('PHP_BENCH_VERSION', '1.0');
 define('TITLE', 'alddesign/php-bench ' . PHP_BENCH_VERSION);
 define('DECIMAL_PLACES', 3);
