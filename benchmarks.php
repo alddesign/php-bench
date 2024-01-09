@@ -147,7 +147,7 @@ return
 		$count = $count * MULTIPLIER;
 		for ($i = 0; $i < $count; $i++) 
 		{
-
+			throw new Exception('Unsupported feature! And some additional text to make it a bit longer!');
 		}
 	}),
 	new Benchmark('n2', 'general', function ($count = 50000)
@@ -422,50 +422,50 @@ return
 	#endregion
 
 	#region rand
-	new Benchmark('rand', 'rand', function($multiplier = 1, $count = 1000000)
+	new Benchmark('rand', 'rand', function($count = 1000000)
 	{
-		$count = $count * $multiplier;
+		$count = $count * MULTIPLIER;
 		for ($i = 0; $i < $count; $i++) {
 			rand(0, $i);
 		}
 	}),
-	new Benchmark('mt_rand', 'rand', function($multiplier = 1, $count = 1000000)
+	new Benchmark('mt_rand', 'rand', function($count = 1000000)
 	{
-		$count = $count * $multiplier;
+		$count = $count * MULTIPLIER;
 		for ($i = 0; $i < $count; $i++) {
 			mt_rand(0, $i);
 		}
 	}),
-	new Benchmark('random_int', 'rand', function($multiplier = 1, $count = 1000000)
+	new Benchmark('random_int', 'rand', function($count = 1000000)
 	{
 		if (!function_exists('random_int')) 
 		{
 			throw new Exception('Function "random_int" does not exist.');
 		}
 
-		$count = $count * $multiplier;
+		$count = $count * MULTIPLIER;
 		for ($i = 0; $i < $count; $i++) {
 			random_int(0, $i);
 		}
 	}),
-	new Benchmark('random_bytes', 'rand', function($multiplier = 1, $count = 1000000)
+	new Benchmark('random_bytes', 'rand', function($count = 1000000)
 	{
 		if (!function_exists('random_bytes')) {
 			throw new Exception('Function "random_bytes" does not exist.');
 		}
 
-		$count = $count * $multiplier;
+		$count = $count * MULTIPLIER;
 		for ($i = 0; $i < $count; $i++) {
 			random_bytes(32);
 		}
 	}),
-	new Benchmark('openssl_random_pseudo_bytes', 'rand', function($multiplier = 1, $count = 1000000)
+	new Benchmark('openssl_random_pseudo_bytes', 'rand', function($count = 1000000)
 	{
 		if (!function_exists('openssl_random_pseudo_bytes')) {
 			throw new Exception('Function "openssl_random_pseudo_bytes" does not exist.');
 		}
 
-		$count = $count * $multiplier;
+		$count = $count * MULTIPLIER;
 		for ($i = 0; $i < $count; $i++) {
 			openssl_random_pseudo_bytes(32);
 		}

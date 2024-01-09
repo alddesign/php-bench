@@ -22,6 +22,11 @@ return
 			'text' => 'PHP Platform', 
 			'value' => PHP_OS
 		],
+		'php_server_interface' => 
+		[
+			'text' => 'PHP server interface', 
+			'value' => PHP_SAPI
+		],
 		'server_os_family' => 
 		[
 			'text' => 'Server OS Family', 
@@ -72,15 +77,15 @@ return
 			'text' => 'XDebug extension', 
 			'value' => extension_loaded('xdebug') ? 'enabled' : 'disabled'
 		],
+		'arguments' => 
+		[
+			'text' => 'Arguments', 
+			'value' => json_encode(ARGS)
+		],
 		'benchmark_started' => 
 		[
 			'text' => 'Benchmark started', 
 			'value' => (new DateTime('now'))->format('Y-m-d H:i:s')
-		],
-		'args' => 
-		[
-			'text' => 'Args', 
-			'value' => json_encode(ARGS)
 		]
 	],
 	'results' => [],
@@ -88,12 +93,12 @@ return
 	[
 		'total_time' =>
 		[
-			'text' => 'Total time (s)',
+			'text' => 'Total time (sec.)',
 			'value' => 0.0
 		],
 		'peak_memory_usage' =>
 		[
-			'text' => 'Peak Memory usage (MiB)',
+			'text' => 'Peak memory usage (MiB)',
 			'value' => 0.0
 		],
 	],

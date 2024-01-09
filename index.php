@@ -9,16 +9,16 @@ define('IS_CLI', PHP_SAPI === 'cli');
 checkPhpVersion(7,0);
 
 //Loading classes
-require './Output.class.php';
-require './Helper.class.php';
-require './BenchmarkHandler.class.php';
-require './Benchmark.class.php';
+require __DIR__ . '/Output.class.php';
+require __DIR__ . '/Helper.class.php';
+require __DIR__ . '/BenchmarkHandler.class.php';
+require __DIR__ . '/Benchmark.class.php';
 
 //Define important constants
 define('PHP_BENCH_VERSION', '1.0');
 define('TITLE', 'alddesign/php-bench ' . PHP_BENCH_VERSION);
 define('DECIMAL_PLACES', 3);
-define('DEFAULT_ARGS', ['benchmarks' => [], 'groups' => [], 'multiplier' => 1.0]);
+define('DEFAULT_ARGS', ['benchmarks' => [], 'groups' => [], 'multiplier' => 1.0, 'json' => false]);
 define('TIME_LIMITS_TO_TRY', [0,300,240,200,180,160,140,120,100,80,60,40,30]);
 /** @var bool */
 define('HRTIME_AVAILABLE', function_exists('hrtime') && hrtime(true) !== false);

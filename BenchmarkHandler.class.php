@@ -1,18 +1,32 @@
 <?php
 declare(strict_types=1);
 
+define('BENCHMARKS_FILE_PATH', __DIR__ . '/benchmarks.php');
+define('DATA_FILE_PATH', __DIR__ . '/data.php');
+
 class BenchmarkHandler
 {
 	/** @var Benchmark[] */
 	public $benchmarks;
 	/** @var array */
-	public $data;
+	public $data = [];
+	public $groups = [];
 	public $runComplete = false;
 
 	public function __construct() 
 	{
-		$this->benchmarks = require './benchmarks.php';
-		$this->data = require './data.php';
+		$this->benchmarks = require BENCHMARKS_FILE_PATH;
+		$this->data = require DATA_FILE_PATH;
+
+		//Build array of all groups - needed to group output
+		$this->groups = [];
+		foreach($this->benchmarks as $benchmark)
+		{
+			if(!in_array($benchmark->group, $this->groups, true))
+			{
+				$this->groups[] = $benchmark->group;
+			}
+		}
 	}
 
 	public function runBenchmarks()
@@ -28,7 +42,6 @@ class BenchmarkHandler
 			
 			$result =
 			[
-				'name' => $benchmark->name,
 				'group' => $benchmark->group,
 				'status' => '', //ok,skipped,error
 				'error' => '',
@@ -58,6 +71,7 @@ class BenchmarkHandler
 
 			//Add the result
 			$this->data['results'][$benchmark->name] = $result;
+			
 		}
 
 		$this->data['totals']['total_time']['value'] = round($totalTime, DECIMAL_PLACES);
