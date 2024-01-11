@@ -371,7 +371,7 @@ return
 	}),
 	#endregion
 
-	#region io
+	#region file
 	new Benchmark('read', 'file', function($count = 2000)
 	{
 		$temp = Helper::makeTempFile();
