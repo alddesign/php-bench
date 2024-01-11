@@ -62,6 +62,7 @@
 		{
 			width: 100%;
 			border-collapse: collapse;
+			word-break: break-word;
 		}
 		table.section td
 		{
@@ -91,6 +92,11 @@
 	/** @var BenchmarkHandler $handler The handler with the data to print */
 ?>
 <body>
+	<script id="php-bench-js">
+		var args = <?= json_encode(ARGS) ?>;
+		var data = <?= json_encode($handler->data) ?>;
+		var threadsData = <?= json_encode($handler->threadsData) ?>;
+	</script>
 	<div id="main">
 	<div id="warning-messages">
 		<?php foreach(Output::$warnings as $warning): ?>
@@ -119,21 +125,19 @@
 						<?php if($e['status'] === 'error'): ?>
 							<td class="time"><?= h($e['error']) ?></td>
 						<?php else: ?>
-							<td class="time"><?= number_format(h((string)$e['time']), DECIMAL_PLACES) ?></td>
+							<td class="time"><?= number_format(round($e['time'], DECIMAL_PLACES), DECIMAL_PLACES) ?></td>
 						<?php endif; ?>
 					</tr>
 				<?php $i++; endif; endforeach; ?>
 			</table>
 		<?php endforeach; ?>
 
-		<h2 class="section-heading">TOTALS</h2>
+		<h2 class="section-heading">TOTAL</h2>
 		<table id="totals" class="section">
-			<?php $i = 0; foreach($handler->data['totals'] as $name => $e): ?>
-				<tr class="total <?= $i%2 ? 'odd' : 'even' ?>">
-					<td class="text"><?= h($e['text']) ?></td>
-					<td class="value"><?= h(number_format($e['value'], DECIMAL_PLACES)) ?></td>
-				</tr>
-			<?php $i++; endforeach; ?>
+			<tr class="total even">
+				<td class="text">TOTAL TIME</td>
+				<td class="value"><?= number_format(round($handler->data['total_time'], DECIMAL_PLACES), DECIMAL_PLACES) ?></td>
+			</tr>
 		</table>
 	</div>
 	</div>

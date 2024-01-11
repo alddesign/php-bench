@@ -1,8 +1,10 @@
 <?php
 declare(strict_types=1);
 
-class Helper
+abstract class Helper
 {
+	private static $_args = [];
+
 	private function __construct() 
 	{
 
@@ -46,13 +48,31 @@ class Helper
 	}
 
 	/**
-	 * Gets the arguments from either the cli or the query string
+	 * Get the arguments
+	 * 
+	 * @param int $i For 0 = final arguments (all), 1 = supplied arguments (by the user)
+	 * 
 	 * @return array
 	 */
-	public static function getArgs()
+	public static function getArgs(int $i)
 	{
-		$args = [];
+		//make sure to load parse them only once
+		if(empty(self::$_args))
+		{
+			self::$_args = self::parseArgs();
+		}
 
+		return self::$_args[$i] ?? [];
+	}
+
+	/**
+	 * Gets the arguments from either the cli or the query string
+	 * @return array [0] => finalArags, [1] => suppliedArgs
+	 */
+	private static function parseArgs()
+	{
+		//Get the args
+		$inputArgs = [];
 		if (IS_CLI) 
 		{
 			//Strip the '--'
@@ -62,34 +82,116 @@ class Helper
 			}, $GLOBALS['argv']);
 
 			//Remove null elements and convert to key value array
-			parse_str(implode('&', array_filter($cleanedArgs)), $args);
+			parse_str(implode('&', array_filter($cleanedArgs)), $inputArgs);
 		} 
 		else 
 		{
-			parse_str($_SERVER['QUERY_STRING'], $args);
+			parse_str($_SERVER['QUERY_STRING'], $inputArgs);
 		}
 
-		//Merge params
-		$args = array_merge(DEFAULT_ARGS, $args);
-
-		//Convert some specific args to array
-		$args['groups'] = !empty($args['groups']) ? explode(',', (string)$args['groups']) : [];
-		$args['benchmarks'] = !empty($args['benchmarks']) ? explode(',', (string)$args['benchmarks']) : [];
-
-		if(!empty($args['benchmarks']) && !empty($args['groups']))
+		//Merge args: if an arg is supplied, take this value, otherwise the default, discard the rest
+		//Plus: Casting the input args to the type definded in DEFAULT_ARGS
+		$finalArgs = []; //The merged args
+		$suppliedArgs = []; //The (valid) args supplie by the user
+		foreach(DEFAULT_ARGS as $k => $v)
 		{
-			Output::errorAndDie('Invalid args. Please spcify either the "groups" or "benchmarks" arg, not both.');
-		}
-
-		//Cast the type of $args to the type defined in DEFAULT_ARGS
-		foreach (DEFAULT_ARGS as $key => $value) 
-		{
-			if (isset($args[$key])) 
+			$type = gettype($v);
+			if(isset($inputArgs[$k]))
 			{
-				settype($args[$key], gettype($value));
+				$vi = $inputArgs[$k];
+				settype($vi, gettype($v));
+				$finalArgs[$k] = $vi;
+				$suppliedArgs[$k] = $vi;
+			}
+			else
+			{
+				$finalArgs[$k] = $v;
 			}
 		}
 
-		return $args;
+		//Sanity check
+		if(!empty($finalArgs['benchmarks']) && !empty($finalArgs['groups']))
+		{
+			Output::errorAndDie('Invalid args. Please supply either the "groups" or "benchmarks" arg, not both.');
+		}
+
+		return [$finalArgs, $suppliedArgs];
+	}
+
+	public static function getScriptUrl()
+	{
+		$protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+
+		return sprintf('%s://%s%s', $protocol, $_SERVER['HTTP_HOST'], $_SERVER['REQUEST_URI']);
+	}
+
+	public static function argsToCliArgs(array $args)
+	{
+		$cliArgs = '';
+		foreach($args as $key => $value)
+		{
+			$cliArgs .= sprintf('--%s=%s ', $key, $value);
+		}
+		
+		return $cliArgs;
+	}
+
+	/**
+	 * Sends an async HTTP GET request without waiting for the result.
+	 * @param string $url
+	 * @return void
+	 */
+	public static function asyncGet(string $url) 
+	{
+		$context = stream_context_create(['http' => ['method' => 'GET', 'header' => "Connection: close\r\n", 'timeout' => 0]]);
+		
+		//Timout=0 will emitt a warning here, so the debugger will stop, but the request is being made!
+		@file_get_contents($url, false, $context);
+	}
+
+	public static function openSession(string $sid)
+	{
+		//Close existing session, just in case...
+		self::closeSession();
+
+		session_id($sid);
+		session_start();
+
+		//Prevent PHP from sending fucking cookie headers (protect the wss session id)
+		header_remove('Set-Cookie');
+	}
+
+	public static function closeSession()
+	{
+		if(session_status() === PHP_SESSION_ACTIVE)
+		{
+			session_write_close();
+		}
+	}
+
+	/**
+	 * Tries to create a temp file with unique name, using several methods. 
+	 * We need to make sure multiple threads dont interact interact with each other.
+	 * And we need to find a location where we can read/write.
+	 * 
+	 * @return string Path to the file
+	 */
+	public static function makeTempFile()
+	{
+		//Try the local ./tmp directory
+		$path = @tempnam(__DIR__ . '/tmp', 'ald');
+		if($path !== false)
+		{
+			return $path;
+		}
+
+		//Tying the systems temp dir
+		$path = @tempnam(sys_get_temp_dir(), 'ald');
+		if($path !== false)
+		{
+			return $path;
+		}
+
+		throw new Exception('Unabled to create temp. file. No permissions?');
 	}
 }

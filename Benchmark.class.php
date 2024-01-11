@@ -8,12 +8,15 @@ class Benchmark
 	/** @var Closure */
 	public $fn = null;
 	public $error = '';
+	/** @var bool */
+	private $hrTimeAvailable = false;
 
 	public function __construct(string $name, string $group, callable $fn) 
 	{
 		$this->name = $name;
 		$this->group = $group;
 		$this->fn = $fn;
+		$this->hrTimeAvailable = function_exists('hrtime') && hrtime(true) !== false;
 	}
 
 	/**
@@ -27,7 +30,7 @@ class Benchmark
 			$this->fn->__invoke();
 			$end = $this->getTime();
 
-			$duration = round($end - $start, DECIMAL_PLACES);
+			$duration = $end - $start;
 			return $duration;
 		}
 		catch(Exception $ex)
@@ -42,6 +45,6 @@ class Benchmark
 	 */
 	private function getTime()
 	{
-		return HRTIME_AVAILABLE ? hrtime(true) / 1e9 : microtime(true);
+		return $this->hrTimeAvailable ? hrtime(true) / 1e9 : microtime(true);
 	}
 }

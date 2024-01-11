@@ -77,11 +77,18 @@ return
 			'text' => 'XDebug extension', 
 			'value' => extension_loaded('xdebug') ? 'enabled' : 'disabled'
 		],
-		'arguments' => 
+		'supplied_args' => 
 		[
-			'text' => 'Arguments', 
-			'value' => json_encode(ARGS)
+			'text' => 'Supplied args', 
+			'value' => IS_CLI ? json_encode(SUPPLIED_ARGS) : json_encode(SUPPLIED_ARGS, JSON_PRETTY_PRINT)
 		],
+		/*
+		'all_args' => 
+		[
+			'text' => 'All args', 
+			'value' => IS_CLI ? json_encode(ARGS) : json_encode(ARGS, JSON_PRETTY_PRINT)
+		],
+		*/
 		'benchmark_started' => 
 		[
 			'text' => 'Benchmark started', 
@@ -89,6 +96,17 @@ return
 		]
 	],
 	'results' => [],
+	'total_time' => 0.0
+	
+	/**
+	 * Removed:
+	 * I dont think we need an entire section for totals, because there only two of them.
+	 * peak_memory_usage is kinda usless because:
+	 * - The vars outside the benchmarks have a way larger memory footprint than the benchmarks themselves, and we cannot separate them
+	 * - The peak_memory_usage will always be the same (2 or 4M)
+	 * - It doesnt say shit about anything
+	 */
+	/*
 	'totals' => 
 	[
 		'total_time' =>
@@ -102,4 +120,5 @@ return
 			'value' => 0.0
 		],
 	],
+	*/
 ];

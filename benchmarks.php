@@ -4,6 +4,8 @@ define('HASHING_DATA', 'egF7awirTJqPwXouhHOAZ3UmEnEbL9');
 define('PWD_HASH', password_hash(HASHING_DATA, PASSWORD_DEFAULT));
 //Data used for json encode/decode:
 define('JSON_DATA', ['string' => 'text', 'int' => 42, 'float' => 42.0, 'bool' => true, 'null' => null, 'array' => [1,2,3,4,5,6,7,8]]);
+//Data unsed for file io and zip
+define('IO_DATA', '8e471ff3d0544253722dbe5f64961d05ac45a4ae7f8460be6becb3252f9df9095f05ec5ef9f07c5a49607e66e8e4da2ac8bfa08639bd31d39582b947cae0c746a0269064b0fa1dd44e8f02e98f1812cd4e5bad542f48ef1384031b570efa070258e4af0938c625c258017db28fa471b972a4e2ce7606c84fd51dddcc16f13401d3a84483a3d6505cf55a4342b3ff84e0ee2052f992fdcc230e804bae82eec6968ccce3fdff38aa320bdd6e1da609c930a19ceabe02f5fab60dd0acefd51c088f2f2b7f65ca31982bc67d6240dddeabb7788ebcb768d29f0b84c6a31e877c6e6f72eb3ac51c9054d71c11137fc99fe3d8b2d9c7e1cc884eac72ceafb3dd536db5');
 
 //Make sure to return an array of type Benchmark
 return
@@ -147,7 +149,7 @@ return
 		$count = $count * MULTIPLIER;
 		for ($i = 0; $i < $count; $i++) 
 		{
-			throw new Exception('Unsupported feature! And some additional text to make it a bit longer!');
+			//throw new Exception('Unsupported feature! And some additional text to make it a bit longer!');
 		}
 	}),
 	new Benchmark('n2', 'general', function ($count = 50000)
@@ -370,54 +372,64 @@ return
 	#endregion
 
 	#region io
-	new Benchmark('file_read', 'io', function($count = 1000)
+	new Benchmark('read', 'file', function($count = 2000)
 	{
-		file_put_contents('test.txt', "test");
+		$temp = Helper::makeTempFile();
+		file_put_contents($temp, IO_DATA);
+
 		$count = $count * MULTIPLIER;
-		for ($i = 0; $i < $count; $i++) {
-			file_get_contents('test.txt');
+		for ($i = 0; $i < $count; $i++)
+		{
+			file_get_contents($temp);
 		}
-		unlink('test.txt');
+		unlink($temp);
 	}),
-	new Benchmark('file_write', 'io', function($count = 1000)
+	new Benchmark('write', 'file', function($count = 2000)
 	{
+		$temp = Helper::makeTempFile();
+
 		$count = $count * MULTIPLIER;
-		for ($i = 0; $i < $count; $i++) {
-			file_put_contents('test.txt', "test $i");
+		for ($i = 0; $i < $count; $i++)
+		{
+			file_put_contents($temp, IO_DATA);
 		}
-		unlink('test.txt');
+		unlink($temp);
 	}),
-	new Benchmark('file_zip', 'io', function($count = 1000)
+	new Benchmark('zip', 'file', function($count = 2000)
 	{
-		file_put_contents('test.txt', "test");
-		$count = $count * MULTIPLIER;
-		for ($i = 0; $i < $count; $i++) {
-			$zip = new ZipArchive();
-			$zip->open('test.zip', ZipArchive::CREATE);
-			$zip->addFile('test.txt');
-			$zip->close();
-		}
-		unlink('test.txt');
-		unlink('test.zip');
-	}),
-	new Benchmark('file_unzip', 'io', function($count = 1000)
-	{
-		file_put_contents('test.txt', "test");
+		$temp = Helper::makeTempFile();
 		$zip = new ZipArchive();
-		$zip->open('test.zip', ZipArchive::CREATE);
-		$zip->addFile('test.txt');
-		$zip->close();
+
 		$count = $count * MULTIPLIER;
-		for ($i = 0; $i < $count; $i++) {
-			$zip = new ZipArchive();
-			$zip->open('test.zip');
-			$zip->extractTo('test');
+		for ($i = 0; $i < $count; $i++) 
+		{
+			$zip->open($temp, ZipArchive::OVERWRITE);
+			$zip->addFromString('file.txt', IO_DATA);
 			$zip->close();
 		}
-		unlink('test.txt');
-		unlink('test.zip');
-		unlink('test/test.txt');
-		rmdir('test');
+		unlink($temp);
+	}),
+	new Benchmark('unzip', 'file', function($count = 2000)
+	{
+		$tempZip = Helper::makeTempFile();
+		$outDir = dirname($tempZip);
+		$outFile = bin2hex(random_bytes(4)); //We need a random filename, so threads dont interact with each other when extracting
+
+		//Initially create one zip archive to read from
+		$zip = new ZipArchive();
+		$zip->open($tempZip, ZipArchive::OVERWRITE);
+		$zip->addFromString($outFile, IO_DATA);
+		$zip->close();
+
+		$count = $count * MULTIPLIER;
+		for ($i = 0; $i < $count; $i++) 
+		{
+			$zip->open($tempZip);
+			$zip->extractTo($outDir); //overwrites existing file
+			$zip->close();
+		}
+		unlink($tempZip);
+		unlink($outDir. '/' . $outFile);
 	}),
 	#endregion
 

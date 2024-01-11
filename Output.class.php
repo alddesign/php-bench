@@ -31,11 +31,13 @@ class Output
 		self::$warnings[] = sprintf('Warning. %s', $message);
 	}
 
-	public static function result(BenchmarkHandler $handler)
+	public static function write(BenchmarkHandler $handler)
 	{
-		if(!$handler->runComplete)
+		//If we are a thread
+		if(ARGS['thread_id'] > -1)
 		{
-			self::errorAndDie('Cannot print results. Please call BenchmarkHandler->run() first.');
+			self::toSession($handler);
+			die;
 		}
 
 		if(IS_CLI)
@@ -46,7 +48,7 @@ class Output
 			}
 			else
 			{
-				self::resultCli($handler);
+				self::toCli($handler);
 			}
 		}
 		else
@@ -62,14 +64,15 @@ class Output
 			}
 		}
 	}
-	private static function resultCli(BenchmarkHandler $handler)
+
+	private static function toCli(BenchmarkHandler $handler)
 	{
 		$n = "\n";
 		$output = '';
 		
 		//Title
 		$output .= self::makeLineCli('','','-', '');
-		$output .= self::makeLineCenterCli(TITLE . 'X', ' ');
+		$output .= self::makeLineCenterCli(TITLE, ' ');
 		$output .= self::makeLineCli('','','-', '');
 		$output .= $n;
 		
@@ -89,19 +92,26 @@ class Output
 			{
 				if($e['group'] === $group)
 				{
-					$output .= self::makeLineCli(sprintf('[%s]%s', $e['status'], $name), $e['status'] === 'error' ? $e['error'] : number_format($e['time'], DECIMAL_PLACES), '.', '.');
+					$output .= self::makeLineCli(sprintf('[%s]%s', $e['status'], $name), $e['status'] === 'error' ? $e['error'] : number_format(round($e['time'], DECIMAL_PLACES), DECIMAL_PLACES), '.', '.');
 				}
 			}
 		}
 		$output .= $n;
 
-		$output .= self::makeLineCli('### TOTALS ','','#', '');
-		foreach($handler->data['totals'] as $name => $e)
-		{
-			$output .= self::makeLineCli($e['text'], number_format($e['value'], DECIMAL_PLACES), '.', '.');
-		}
+		$output .= self::makeLineCli('### TOTAL ','','#', '');
+		$output .= self::makeLineCli('TOTAL TIME', number_format(round($handler->data['total_time'], DECIMAL_PLACES), DECIMAL_PLACES), '.', '.');
 
 		echo $output;
+	}
+
+	public static function toSession(BenchmarkHandler $handler)
+	{
+		Helper::openSession(ARGS['master_sid']);
+		$_SESSION['threads'][ARGS['thread_id']]['status'] = 'done';
+		$_SESSION['threads'][ARGS['thread_id']]['data'] = $handler->data;
+		Helper::closeSession();
+
+		die;
 	}
 
 	private static function makeLineCli(string $start, string $end, string $padChar, string $pre)
