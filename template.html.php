@@ -98,11 +98,6 @@
 		var threadsData = <?= json_encode($handler->threadsData) ?>;
 	</script>
 	<div id="main">
-	<div id="warning-messages">
-		<?php foreach(Output::$warnings as $warning): ?>
-			<div class="warning-message"><?= h($warning) ?></div>
-		<?php endforeach; ?>
-	</div>
 	<h1 id="title"><?= h(TITLE) ?></h1>
 	<div id="sysinfos">
 		<h2 class="section-heading">SYSTEM INFO</h2>

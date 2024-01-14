@@ -1,13 +1,12 @@
 <?php
-//Data used for the hash functions:
+/** @var string Data used for the hash functions */
 define('HASHING_DATA', 'egF7awirTJqPwXouhHOAZ3UmEnEbL9');
-define('PWD_HASH', password_hash(HASHING_DATA, PASSWORD_DEFAULT));
-//Data used for json encode/decode:
+/** @var array Data used for json encode/decode */
 define('JSON_DATA', ['string' => 'text', 'int' => 42, 'float' => 42.0, 'bool' => true, 'null' => null, 'array' => [1,2,3,4,5,6,7,8]]);
 //Data unsed for file io and zip
 define('IO_DATA', '8e471ff3d0544253722dbe5f64961d05ac45a4ae7f8460be6becb3252f9df9095f05ec5ef9f07c5a49607e66e8e4da2ac8bfa08639bd31d39582b947cae0c746a0269064b0fa1dd44e8f02e98f1812cd4e5bad542f48ef1384031b570efa070258e4af0938c625c258017db28fa471b972a4e2ce7606c84fd51dddcc16f13401d3a84483a3d6505cf55a4342b3ff84e0ee2052f992fdcc230e804bae82eec6968ccce3fdff38aa320bdd6e1da609c930a19ceabe02f5fab60dd0acefd51c088f2f2b7f65ca31982bc67d6240dddeabb7788ebcb768d29f0b84c6a31e877c6e6f72eb3ac51c9054d71c11137fc99fe3d8b2d9c7e1cc884eac72ceafb3dd536db5');
 
-//Make sure to return an array of type Benchmark
+//The bencharks! Make sure to return an array with elements of type benchmark
 return
 [
 	#region general
@@ -144,22 +143,6 @@ return
 			ucwords($string);
 		}
 	}),
-	new Benchmark('n1', 'general', function ($count = 50000)
-	{
-		$count = $count * MULTIPLIER;
-		for ($i = 0; $i < $count; $i++) 
-		{
-			//throw new Exception('Unsupported feature! And some additional text to make it a bit longer!');
-		}
-	}),
-	new Benchmark('n2', 'general', function ($count = 50000)
-	{
-		$count = $count * MULTIPLIER;
-		for ($i = 0; $i < $count; $i++) 
-		{
-
-		}
-	}),
 	new Benchmark('array_basics', 'general', function ($count = 200000)
 	{
 		//Rather than array functions like below, we test "basic" array operations like initialization, accessing, setting, adding and unsetting elements.
@@ -290,26 +273,6 @@ return
 			json_decode($jsonData, false);
 		}
 	}),
-	new Benchmark('closures', 'general', function ($count = 200000)
-	{
-		$count = $count * MULTIPLIER;
-
-		$closure = function($a, $b){return $a + $b;};
-		for ($i = 0; $i < $count; $i++) 
-		{
-			$closure(1,2);
-		}
-	}),
-	new Benchmark('closures_invoke', 'general', function ($count = 200000)
-	{
-		$count = $count * MULTIPLIER;
-		
-		$closure = function($a, $b){return $a + $b;};
-		for ($i = 0; $i < $count; $i++) 
-		{
-			$closure->__invoke(1,2);
-		}
-	}),
 	#endregion
 
 	#region hash
@@ -321,8 +284,14 @@ return
 	new Benchmark('password_verify', 'hash', function ($count = 20)
 	{
 		$count = $count * MULTIPLIER;
-		for ($i = 0; $i < $count; $i++){ password_verify(HASHING_DATA, PWD_HASH); }
-	}),
+		$passwordHash = $this->data['password_hash'];
+		for ($i = 0; $i < $count; $i++){ password_verify(HASHING_DATA, $passwordHash); }
+	},
+	function()
+	{
+		$this->data['password_hash'] = password_hash(HASHING_DATA, PASSWORD_DEFAULT);
+	}
+	),
 	new Benchmark('md5', 'hash', function ($count = 50000)
 	{
 		$count = $count * MULTIPLIER;
@@ -374,62 +343,96 @@ return
 	#region file
 	new Benchmark('read', 'file', function($count = 2000)
 	{
-		$temp = Helper::makeTempFile();
-		file_put_contents($temp, IO_DATA);
-
 		$count = $count * MULTIPLIER;
+
+		$temp = $this->data['temp'];
 		for ($i = 0; $i < $count; $i++)
 		{
 			file_get_contents($temp);
 		}
-		unlink($temp);
-	}),
+	},
+	function()
+	{
+		$this->data['temp'] = Helper::makeTempFile();
+		file_put_contents($this->data['temp'], IO_DATA);
+	},
+	function()
+	{
+		unlink($this->data['temp']);
+	}
+	),
 	new Benchmark('write', 'file', function($count = 2000)
 	{
-		$temp = Helper::makeTempFile();
-
 		$count = $count * MULTIPLIER;
+
+		$temp = $this->data['temp'];
 		for ($i = 0; $i < $count; $i++)
 		{
 			file_put_contents($temp, IO_DATA);
 		}
-		unlink($temp);
-	}),
+	},
+	function()
+	{
+		$this->data['temp'] = Helper::makeTempFile();
+	},
+	function()
+	{
+		unlink($this->data['temp']);
+	}
+	),
 	new Benchmark('zip', 'file', function($count = 2000)
 	{
-		$temp = Helper::makeTempFile();
-		$zip = new ZipArchive();
-
 		$count = $count * MULTIPLIER;
+
+		$temp = $this->data['temp'];
+		$zip = $this->data['zip'];
 		for ($i = 0; $i < $count; $i++) 
 		{
 			$zip->open($temp, ZipArchive::OVERWRITE);
 			$zip->addFromString('file.txt', IO_DATA);
 			$zip->close();
 		}
-		unlink($temp);
+	},
+	function()
+	{
+		$this->data['temp'] = Helper::makeTempFile();
+		$this->data['zip'] = new ZipArchive();
+	},
+	function()
+	{
+		unlink($this->data['temp']);
 	}),
 	new Benchmark('unzip', 'file', function($count = 2000)
 	{
-		$tempZip = Helper::makeTempFile();
-		$outDir = dirname($tempZip);
-		$outFile = bin2hex(random_bytes(4)); //We need a random filename, so threads dont interact with each other when extracting
-
-		//Initially create one zip archive to read from
-		$zip = new ZipArchive();
-		$zip->open($tempZip, ZipArchive::OVERWRITE);
-		$zip->addFromString($outFile, IO_DATA);
-		$zip->close();
-
 		$count = $count * MULTIPLIER;
+
+		$tempZip = $this->data['tempZip'] ;
+		$outDir = $this->data['outDir'];
+		$zip = $this->data['zip'];
 		for ($i = 0; $i < $count; $i++) 
 		{
 			$zip->open($tempZip);
 			$zip->extractTo($outDir); //overwrites existing file
 			$zip->close();
 		}
-		unlink($tempZip);
-		unlink($outDir. '/' . $outFile);
+	},
+	function()
+	{
+		$this->data['zip'] = new ZipArchive();
+		$this->data['tempZip'] = Helper::makeTempFile();
+		$this->data['outDir'] = dirname($this->data['tempZip']);
+		$this->data['outFile'] = bin2hex(random_bytes(8)); //We need a random filename, so threads dont interact with each other when extracting
+
+		//Initially create one zip archive to read from
+		$zip = new ZipArchive();
+		$zip->open($this->data['tempZip'], ZipArchive::OVERWRITE);
+		$zip->addFromString($this->data['outFile'], IO_DATA);
+		$zip->close();
+	},
+	function()
+	{
+		unlink($this->data['tempZip']);
+		unlink($this->data['outDir'] . '/' . $this->data['outFile']);
 	}),
 	#endregion
 
@@ -450,37 +453,48 @@ return
 	}),
 	new Benchmark('random_int', 'rand', function($count = 1000000)
 	{
-		if (!function_exists('random_int')) 
-		{
-			throw new Exception('Function "random_int" does not exist.');
-		}
-
 		$count = $count * MULTIPLIER;
 		for ($i = 0; $i < $count; $i++) {
 			random_int(0, $i);
 		}
-	}),
+	},
+	function ()
+	{
+		if (!function_exists('random_int')) 
+		{
+			throw new Exception('Function "random_int" does not exist.');
+		}
+	}
+	),
 	new Benchmark('random_bytes', 'rand', function($count = 1000000)
 	{
-		if (!function_exists('random_bytes')) {
-			throw new Exception('Function "random_bytes" does not exist.');
-		}
-
 		$count = $count * MULTIPLIER;
 		for ($i = 0; $i < $count; $i++) {
 			random_bytes(32);
 		}
-	}),
+	},
+	function()
+	{
+		if (!function_exists('random_bytes')) 
+		{
+			throw new Exception('Function "random_bytes" does not exist.');
+		}
+	}
+	),
 	new Benchmark('openssl_random_pseudo_bytes', 'rand', function($count = 1000000)
 	{
-		if (!function_exists('openssl_random_pseudo_bytes')) {
-			throw new Exception('Function "openssl_random_pseudo_bytes" does not exist.');
-		}
-
 		$count = $count * MULTIPLIER;
 		for ($i = 0; $i < $count; $i++) {
 			openssl_random_pseudo_bytes(32);
 		}
-	})
+	},
+	function()
+	{
+		if (!function_exists('openssl_random_pseudo_bytes')) 
+		{
+			throw new Exception('Function "openssl_random_pseudo_bytes" does not exist.');
+		}
+	}
+	)
 	#endregion
 ];

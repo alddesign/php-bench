@@ -38,12 +38,15 @@ abstract class Helper
 		{
 			$unable = implode(',', $unable);
 			$current = (int)ini_get('max_execution_time');
-			$warning = '';
-			$warning .= "Unable tot increase max_execution_time to one of the following values.: $unable. Current value: $current. ";
-			$warning .= 'This can be due to your apache/php config, or limited by your hosting provider. ';
-			$warning .= 'Depending on your systems performance, this is necessary to run all benchmarks.';
+			$warning = <<<msg
+			Unable to increase PHP max_execution_time. Tried following values: $unable.
+			Current value: $current.
+			This can be due to your apache/php config, or be limited by your hosting provider.
+			Depending on your systems performance, this is necessary to run all benchmarks.
+			If there is no output, try to set the "multiplier" argument to a lower value.
+			msg;
 			
-			Output::addWarning($warning);
+			Output::warning($warning);
 		}
 	}
 
@@ -125,15 +128,23 @@ abstract class Helper
 		return sprintf('%s://%s%s', $protocol, $_SERVER['HTTP_HOST'], $_SERVER['REQUEST_URI']);
 	}
 
+	/**
+	 * @return string
+	 */
 	public static function argsToCliArgs(array $args)
 	{
+		if(empty($args))
+		{
+			return '';
+		}
+
 		$cliArgs = '';
 		foreach($args as $key => $value)
 		{
-			$cliArgs .= sprintf('--%s=%s ', $key, $value);
+			$cliArgs .= sprintf('--%s=%s' . ' ', $key, $value);
 		}
 		
-		return $cliArgs;
+		return substr($cliArgs, 0, strlen($cliArgs) - 1); //remove the last space
 	}
 
 	/**
@@ -141,7 +152,7 @@ abstract class Helper
 	 * @param string $url
 	 * @return void
 	 */
-	public static function asyncGet(string $url) 
+	public static function asyncHttpGET(string $url) 
 	{
 		$context = stream_context_create(['http' => ['method' => 'GET', 'header' => "Connection: close\r\n", 'timeout' => 0]]);
 		

@@ -7,9 +7,6 @@ define('HTML_TPL_PATH', __DIR__ . '/template.html.php');
 
 class Output
 {
-	/** @var string[] */
-	public static $warnings = [];
-
 	private function __construct() 
 	{
 		//Prevent making an object
@@ -17,18 +14,25 @@ class Output
 
 	public static function errorAndDie(string $message)
 	{
-		if(!IS_CLI)
+		$message = "ERROR: $message";
+
+		if(IS_CLI)
+		{
+			echo "\033[31m$message\033[0m\n";
+		}
+		else
 		{
 			@http_response_code(500);
+			sprintf('<pre style="color: darkred;">%s</pre>', htmlspecialchars($message));
 		}
 
-		echo $message;
 		exit(1);
 	}
 
-	public static function addWarning(string $message)
+	public static function warning(string $message)
 	{
-		self::$warnings[] = sprintf('Warning. %s', $message);
+		$message = "WARNING: $message";
+		echo IS_CLI ? "\033[33m$message\033[0m\n\n" : sprintf('<pre style="color: peru;">%s</pre>', htmlspecialchars($message));
 	}
 
 	public static function write(BenchmarkHandler $handler)

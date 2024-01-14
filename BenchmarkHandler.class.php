@@ -18,11 +18,11 @@ class BenchmarkHandler
 	private $groupFilter = [];
 	private $benchmarkFilter = [];
 
-	private int $threadId = -1;
-	private bool $isThread = false;
-	private bool $isMerged = false;
-	private bool $done = false;
-	private string $masterSid = '';
+	private $threadId = -1;
+	private $isThread = false;
+	private $isMerged = false;
+	private $done = false;
+	private $masterSid = '';
 
 	public function __construct(string $groupsFilter, string $benchmarksFilter, int $threadId, string $masterSid) 
 	{
@@ -58,7 +58,7 @@ class BenchmarkHandler
 	{
 		$l = count($threadsData);
 
-		$handler = new BenchmarkHandler('','', -1, '');
+		$handler = new BenchmarkHandler('','', -1, '', '');
 		$handler->isMerged = true;
 		$handler->done = true;
 		$handler->threadsData = $threadsData;
@@ -110,13 +110,15 @@ class BenchmarkHandler
 		//Don try to re
 		if($this->done || $this->isMerged)
 		{
-			Output::errorAndDie('Dont re-run a BanchmarkHandler');
+			Output::errorAndDie('BenchmarkHandler has already finished. Do not run benchmarks again.');
 		}
 
 		if($this->isThread)
 		{
+			//Write to the master session
 			Helper::openSession($this->masterSid);
 			$_SESSION['threads'][$this->threadId]['status'] = 'running';
+			$_SESSION['threads'][$this->threadId]['heartbeat'] = time();
 			Helper::closeSession();
 		}
 
@@ -139,6 +141,13 @@ class BenchmarkHandler
 
 			if($runThisBenchmark && $runThisGroup)
 			{
+				if($this->isThread)
+				{
+					Helper::openSession($this->masterSid);
+					$_SESSION['threads'][$this->threadId]['heartbeat'] = time();
+					Helper::closeSession();
+				}
+
 				//Running the benchmark!
 				$time = $benchmark->run();
 				if($time !== false)
