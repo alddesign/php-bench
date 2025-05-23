@@ -16,8 +16,9 @@ class Benchmark
 	/** @var array Used to exchange data between benchmarkFn, preFn and PostFn */
 	private $data = [];
 	public $error = '';
-	/** @var bool */
-	private $hrTimeAvailable = false;
+	public $custom = false;
+
+	public static $customPreset = false;
 
 	/**
 	 * @param string $name The unique name of the benchmark
@@ -28,12 +29,12 @@ class Benchmark
 	 */
 	public function __construct(string $name, string $group, callable $benchmarkFn, ?callable $preFn = null, ?callable $postFn = null) 
 	{
-		$this->name = $name;
+		$this->custom = self::$customPreset;
+		$this->name = $this->custom ? $name . '*' : $name;
 		$this->group = $group;
 		$this->benchmarkFn = $benchmarkFn;
 		$this->preFn = $preFn;
 		$this->postFn = $postFn;
-		$this->hrTimeAvailable = function_exists('hrtime') && hrtime(true) !== false;
 	}
 
 	/**
@@ -86,7 +87,6 @@ class Benchmark
 			return false;
 		}
 
-
 		return $duration;
 	}
 
@@ -95,6 +95,8 @@ class Benchmark
 	 */
 	private function getTime()
 	{
-		return $this->hrTimeAvailable ? hrtime(true) / 1e9 : microtime(true);
+		$time = HR_TIME_AVAIL ? hrtime(true) : microtime(true);
+		$time = HR_TIME_AVAIL ? $time / 1e9 : $time;
+		return $time;
 	}
 }

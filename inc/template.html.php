@@ -1,102 +1,20 @@
 <!DOCTYPE html>
-<html>
-<head>
-	<meta charset="utf-8">
-	<style type="text/css">
-		html
-		{
-			font-size: 13px;
-			font-family: monospace;
-		}
-		body
-		{
-			background-color: white;
-			padding: 0;
-			margin: 1rem;
-		}
-		#main
-		{
-			width: 50rem;
-			max-width: 100%;
-		}
-		#title
-		{
-			color: teal;
-			margin: 0;
-			border-bottom: 1px dashed teal;
-		}
-		.section-heading
-		{
-			color: teal; 
-		}
-		h2.section-heading
-		{
-			margin: .5rem 0 .3rem 0;
-			font-size: 1.5rem;
-			border-bottom: 1px dashed teal;
-		}
-		h3.section-heading
-		{
-			margin: .25rem 0 0 0;
-			font-size: 1.25rem;
-		}
-		.group-section-heading
-		{
-			color: teal;
-			margin-top: .25rem;
-		}
-		.status-error
-		{
-			color: crimson;
-		}
-		.status-skipped
-		{
-			color: gray;
-		}
-		.warning-message
-		{
-			color: peru;
-			font-size: 1.25rem;
-		}
-		table.section
-		{
-			width: 100%;
-			border-collapse: collapse;
-			word-break: break-word;
-		}
-		table.section td
-		{
-			width: 50%;
-		}
-
-		table.section tr.odd
-		{
-			background-color: #ddd;
-		}
-
-		table.section td.value,
-		table.section td.time
-		{
-			text-align: right;
-		}
-
-		table#totals
-		{
-			font-weight: bold;
-		}
-	</style>
-</head>
 <?php
 	function h(string $s){return htmlspecialchars($s);}
 
 	/** @var BenchmarkHandler $handler The handler with the data to print */
 ?>
-<body>
+<html>
+<head>
+	<meta charset="utf-8">
+	<style type="text/css"><?= file_get_contents(__DIR__ .  '/template.css') ?></style>
 	<script id="php-bench-js">
 		var args = <?= json_encode(ARGS) ?>;
 		var data = <?= json_encode($handler->data) ?>;
 		var threadsData = <?= json_encode($handler->threadsData) ?>;
 	</script>
+</head>
+<body>
 	<div id="main">
 	<h1 id="title"><?= h(TITLE) ?></h1>
 	<div id="sysinfos">

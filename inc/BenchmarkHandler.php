@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 define('BENCHMARKS_FILE_PATH', __DIR__ . '/benchmarks.php');
+define('BENCHMARKS_CUSTOM_FILE_PATH', __DIR__ . '/benchmarksCustom.php');
 define('DATA_FILE_PATH', __DIR__ . '/data.php');
 
 class BenchmarkHandler
@@ -26,7 +27,12 @@ class BenchmarkHandler
 
 	public function __construct(string $groupsFilter, string $benchmarksFilter, int $threadId, string $masterSid) 
 	{
-		$this->benchmarks = require BENCHMARKS_FILE_PATH;
+		Benchmark::$customPreset = false;
+		$benchmarks = require BENCHMARKS_FILE_PATH;
+		Benchmark::$customPreset = true;
+		$benchmarksCustom = require BENCHMARKS_CUSTOM_FILE_PATH;
+
+		$this->benchmarks = array_merge($benchmarks, $benchmarksCustom);
 		$this->data = require DATA_FILE_PATH;
 		$this->threadId = $threadId;
 		$this->isThread = $threadId >= 0;

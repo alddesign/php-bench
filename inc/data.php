@@ -42,6 +42,11 @@ return
 			'text' => 'Server Architecture', 
 			'value' => php_uname('m')
 		],
+		'cpu_model' => 
+		[
+			'text' => 'CPU Model', 
+			'value' => Helper::getCpuModel()
+		],
 		'host' => 
 		[
 			'text' => 'Host', 
@@ -80,7 +85,7 @@ return
 		'supplied_args' => 
 		[
 			'text' => 'Supplied args', 
-			'value' => IS_CLI ? json_encode(SUPPLIED_ARGS) : json_encode(SUPPLIED_ARGS, JSON_PRETTY_PRINT)
+			'value' => Helper::formatArgsArray(SUPPLIED_ARGS)
 		],
 		/*
 		'all_args' => 

@@ -14,16 +14,14 @@ class Output
 
 	public static function errorAndDie(string $message)
 	{
-		$message = "ERROR: $message";
-
 		if(IS_CLI)
 		{
-			echo "\033[31m$message\033[0m\n";
+			echo "\033[31mERROR: $message\033[0m\n";
 		}
 		else
 		{
 			@http_response_code(500);
-			sprintf('<pre style="color: darkred;">%s</pre>', htmlspecialchars($message));
+			sprintf('<pre style="color: darkred;">ERROR: %s</pre>', htmlspecialchars($message));
 		}
 
 		exit(1);
@@ -31,8 +29,7 @@ class Output
 
 	public static function warning(string $message)
 	{
-		$message = "WARNING: $message";
-		echo IS_CLI ? "\033[33m$message\033[0m\n\n" : sprintf('<pre style="color: peru;">%s</pre>', htmlspecialchars($message));
+		echo IS_CLI ? "\033[33mWARNING: $message\033[0m\n\n" : sprintf('<pre style="color: peru;">WARNING: %s</pre>', htmlspecialchars($message));
 	}
 
 	public static function write(BenchmarkHandler $handler)

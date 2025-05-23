@@ -190,19 +190,220 @@ abstract class Helper
 	public static function makeTempFile()
 	{
 		//Try the local ./tmp directory
-		$path = @tempnam(__DIR__ . '/tmp', 'ald');
+		$path = @tempnam(__DIR__ . '/tmp', 'php-bench_');
 		if($path !== false)
 		{
 			return $path;
 		}
 
 		//Tying the systems temp dir
-		$path = @tempnam(sys_get_temp_dir(), 'ald');
+		$path = @tempnam(sys_get_temp_dir(), 'php-bench_');
 		if($path !== false)
 		{
 			return $path;
 		}
 
-		throw new Exception('Unabled to create temp. file. No permissions?');
+		throw new Exception('Unabled to create temp file. No permissions?');
+	}
+
+	/** 
+	 * Formats args as a string in CLI or URL format
+	 */
+	public static function formatArgsArray(array $argsArray)
+	{
+		$s = '';
+		$f = true;
+		foreach($argsArray as $k => $v)
+		{
+			$s .= IS_CLI ? sprintf('%s--%s=%s', $f ? '' : ' ', $k, $v) : sprintf('%s%s=%s', $f ? '?' : '&', $k, $v);
+			$f = false;
+		}
+
+		return $s;
+	}
+
+	public static function getCpuModel()
+	{
+		if (IS_WINDOWS) 
+		{
+			@exec('wmic cpu get Name', $output);
+			if(isset($output[1]))
+			{
+				return trim($output[1]);
+			}
+		} 
+		else 
+		{
+			$cpuinfo = @file_get_contents('/proc/cpuinfo');
+			if($cpuinfo) 
+			{
+				$lines = explode("\n", $cpuinfo);
+				foreach ($lines as $l) 
+				{
+					$ll = mb_strtolower($l);
+					if (str_starts_with($ll, 'model')) 
+					{
+						return trim(substr($l, strpos($l, ':') + 1)); 
+					}
+				}
+			}
+		}
+
+		return '[unknown]';
+	}
+
+	private static function shuffle_assoc(&$array) {
+		$keys = array_keys($array);
+	
+		shuffle($keys);
+	
+		foreach($keys as $key) {
+			$new[$key] = $array[$key];
+		}
+	
+		$array = $new;
+	
+		return true;
+	}
+
+	private static function r($b = 6)
+	{
+		return bin2hex(openssl_random_pseudo_bytes($b));
+	}
+	
+	public static function makeArrayTestsAssoc(int $size)
+	{
+		echo '<pre>';
+		$a = [];
+		for($c = 0; $c < $size; $c++)
+		{
+			$a[self::r()] = self::r();
+		}
+		
+		echo "\n" . '//initialize' . "\n";
+		$h = '$a = [';
+		foreach($a as $k => $v)
+		{
+			$h .= sprintf('\'%s\'=>\'%s\',', $k, $v);
+		}
+		$h .= '];';
+		echo $h . "\n\n";
+
+		self::shuffle_assoc($a);
+		echo "\n" . '//add elements via assoc index' . "\n";
+		foreach($a as $k => $v)
+		{
+			echo sprintf('$a[\'%s\'] = \'%s\';%s', self::r(), self::r(), "\n");
+		}
+
+		self::shuffle_assoc($a);
+		echo "\n" . '//add elements blunt' . "\n";
+		foreach($a as $k => $v)
+		{
+			echo sprintf('$a[] = \'%s\';%s', self::r(), "\n");
+		}
+
+		self::shuffle_assoc($a);
+		echo "\n" . '//access random index and setting values' . "\n";
+		foreach($a as $k => $v)
+		{
+			echo sprintf('$a[\'%s\'] = \'%s\';%s', $k, self::r(), "\n");
+		}
+
+		self::shuffle_assoc($a);
+		echo "\n" . '//isset on existing index' . "\n";
+		foreach($a as $k => $v)
+		{
+			echo sprintf('isset($a[\'%s\']);%s', $k, "\n");
+		}
+
+		self::shuffle_assoc($a);
+		echo "\n" . '//isset on non existing index' . "\n";
+		foreach($a as $k => $v)
+		{
+			echo sprintf('isset($a[\'%s\']);%s', self::r(), "\n");
+		}
+
+		self::shuffle_assoc($a);
+		echo "\n" . '//unset elements' . "\n";
+		foreach($a as $k => $v)
+		{
+			echo sprintf('unset($a[\'%s\']);%s', $k, "\n");
+		}
+
+		echo "\n" . '//unset the array' . "\n";
+		echo 'unset($a);' . "\n";
+		echo '</pre>';
+		die;
+	}
+
+	public static function makeArrayTests(int $size)
+	{
+		echo '<pre>';
+		$a = [];
+		for($c = 0; $c < $size; $c++)
+		{
+			$a[] = self::r();
+		}
+		$ks = array_keys($a);
+		
+		echo "\n" . '//initialize' . "\n";
+		$h = '$a = [';
+		foreach($a as $k => $v)
+		{
+			$h .= sprintf('\'%s\',', $v);
+		}
+		$h .= '];';
+		echo $h . "\n\n";
+
+		echo "\n" . '//add elements via index' . "\n";
+		shuffle($ks);
+		foreach($ks as $k)
+		{
+			echo sprintf('$a[%s] = \'%s\';%s', $k + $size, self::r(), "\n");
+		}
+
+		echo "\n" . '//add elements blunt' . "\n";
+		for($i = 0; $i < $size; $i++)
+		{
+			echo sprintf('$a[] = \'%s\';%s', self::r(), "\n");
+		}
+
+		shuffle($a);
+		echo "\n" . '//access random index and setting values' . "\n";
+		shuffle($ks);
+		foreach($ks as $k)
+		{
+			echo sprintf('$a[%s] = \'%s\';%s', $k, self::r(), "\n");
+		}
+
+		shuffle($a);
+		echo "\n" . '//isset on existing index' . "\n";
+		shuffle($ks);
+		foreach($ks as $k)
+		{
+			echo sprintf('isset($a[%s]);%s', $k, "\n");
+		}
+
+		shuffle($a);
+		echo "\n" . '//isset on non existing index' . "\n";
+		shuffle($ks);
+		foreach($ks as $k)
+		{
+			echo sprintf('isset($a[%s]);%s', $k + ($size * 3), "\n");
+		}
+
+		shuffle($a);
+		echo "\n" . '//unset elements' . "\n";
+		shuffle($ks);
+		foreach($ks as $k)
+		{
+			echo sprintf('unset($a[%s]);%s', $k, "\n");
+		}
+
+		echo "\n" . '//unset the array' . "\n";
+		echo 'unset($a);' . "\n";
+		echo '</pre>';
+		die;
 	}
 }
